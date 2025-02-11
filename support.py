@@ -6,40 +6,64 @@ import plotly
 import plotly.express as px
 import json
 
-
-# Use this function for SQLITE3
 def connect_db():
     conn = sqlite3.connect("expense.db")
     cur = conn.cursor()
     cur.execute(
-        '''CREATE TABLE IF NOT EXISTS user_login (user_id INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(30) NOT NULL, 
-        email VARCHAR(30) NOT NULL UNIQUE, password VARCHAR(20) NOT NULL)''')
+        '''CREATE TABLE IF NOT EXISTS user_login 
+           (user_id INTEGER PRIMARY KEY AUTOINCREMENT, 
+           username VARCHAR(30) NOT NULL, 
+           email VARCHAR(30) NOT NULL UNIQUE, 
+           password VARCHAR(20) NOT NULL)''')
+
+
+    return conn, cur
+
     cur.execute(
-        '''CREATE TABLE IF NOT EXISTS user_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, pdate DATE NOT 
-        NULL, expense VARCHAR(10) NOT NULL, amount INTEGER NOT NULL, pdescription VARCHAR(50), FOREIGN KEY (user_id) 
-        REFERENCES user_login(user_id))''')
+        '''CREATE TABLE IF NOT EXISTS User_login 
+           (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+           user_id INTEGER NOT NULL, 
+           pdate DATE NOT NULL, 
+           expense VARCHAR(10) NOT NULL, 
+           amount INTEGER NOT NULL, 
+           pdescription VARCHAR(50), 
+           FOREIGN KEY (user_id) REFERENCES user_login(user_id))''')
+
+    cur.execute(
+        '''CREATE TABLE IF NOT EXISTS user_expenses 
+           (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+           user_id INTEGER NOT NULL, 
+           pdate DATE NOT NULL, 
+           expense VARCHAR(10) NOT NULL, 
+           amount INTEGER NOT NULL, 
+           pdescription VARCHAR(50), 
+           FOREIGN KEY (user_id) REFERENCES user_login(user_id))''')
     conn.commit()
     return conn, cur
 
 
-# Use this function for mysql
+ #Use this function for SQLITE3
+
+
+
+ #Use this function for mysql
 # import mysql.connector  # pip install mysql-connector-python
 # def connect_db(host="localhost", user="root", passwd="123456", port=3306, database='expense',
-#                auth_plugin='mysql_native_password'):
-#     """
-#     Connect to database
-#     :param host: host
-#     :param user: username
+#                 auth_plugin='mysql_native_password'):
+#      """
+#      Connect to database
+#      :param host: host
+#      :param user: username
 #     :param passwd: password
-#     :param port: port no
+#      :param port: port no
 #     :param database: database name
-#     :param auth_plugin: plugin
-#     :return: connection, cursor
-#     """
-#     conn = mysql.connector.connect(host=host, user=user, passwd=passwd, port=port, database=database,
-#                                    auth_plugin=auth_plugin)
-#     cursor = conn.cursor()
-#     return conn, cursor
+#      :param auth_plugin: plugin
+#      :return: connection, cursor
+#      """
+#      conn = mysql.connector.connect(host=host, user=user, passwd=passwd, port=port, database=database,
+#                                     auth_plugin=auth_plugin)
+   # cursor = conn.cursor()
+    #return conn, cursor
 
 
 def close_db(connection=None, cursor=None):
