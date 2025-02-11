@@ -7,12 +7,26 @@ import plotly.express as px
 import json
 import warnings
 import support
+from dotenv import load_dotenv  # Add this
+import openai
+from werkzeug.security import generate_password_hash, check_password_hash
 
 warnings.filterwarnings("ignore")
 
+load_dotenv()  # Add this to load .env file
+
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+app.permanent_session_lifetime = timedelta(minutes=15)
 
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax'
+)
+
+# Get the API key (works with both conda env vars and .env file)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Access key here
 
 @app.route('/')
 def login():
@@ -30,9 +44,9 @@ def login_validation():
     if 'user_id' not in session:  # if user not logged-in
         email = request.form.get('email')
         passwd = request.form.get('password')
-        query = """SELECT * FROM user_login WHERE email LIKE '{}' AND password LIKE '{}'""".format(email, passwd)
-        users = support.execute_query("search", query)
-        if len(users) > 0:  # if user details matched in db
+        query = """SELECT * FROM user_login WHERE email = %s AND password = %s"""
+        users = support.execute_query("search", query, (email, passwd))
+        if users and check_password_hash(users[0][3], passwd):  # Verify hash
             session['user_id'] = users[0][0]
             return redirect('/home')
         else:  # if user details not matched in db
@@ -48,11 +62,11 @@ def reset():
     if 'user_id' not in session:
         email = request.form.get('femail')
         pswd = request.form.get('pswd')
-        userdata = support.execute_query('search', """select * from user_login where email LIKE '{}'""".format(email))
+        userdata = support.execute_query('search', "SELECT * FROM user_login WHERE email LIKE %s", (email,))
         if len(userdata) > 0:
             try:
-                query = """update user_login set password = '{}' where email = '{}'""".format(pswd, email)
-                support.execute_query('insert', query)
+                query = "UPDATE user_login SET password = %s WHERE email = %s"
+                support.execute_query('insert', query, (pswd, email))
                 flash("Password has been changed!!")
                 return redirect('/')
             except:
@@ -82,18 +96,17 @@ def registration():
         passwd = request.form.get('password')
         if len(name) > 5 and len(email) > 10 and len(passwd) > 5:  # if input details satisfy length condition
             try:
-                query = """INSERT INTO user_login(username, email, password) VALUES('{}','{}','{}')""".format(name,
-                                                                                                              email,
-                                                                                                              passwd)
-                support.execute_query('insert', query)
+                hashed_password = generate_password_hash(passwd)  # Hash password
+                query = "INSERT INTO user_login(username, email, password) VALUES(%s,%s,%s)"
+                support.execute_query('insert', query, (name, email, hashed_password))  # Store hash
 
-                user = support.execute_query('search',
-                                             """SELECT * from user_login where email LIKE '{}'""".format(email))
+                user = support.execute_query('search', "SELECT * FROM user_login WHERE email LIKE %s", (email,))
                 session['user_id'] = user[0][0]  # set session on successful registration
                 flash("Successfully Registered!!")
                 return redirect('/home')
-            except:
-                flash("Email id already exists, use another email!!")
+            except Exception as e:
+                app.logger.error(f"Registration error: {str(e)}")
+                flash("Server error during registration")
                 return redirect('/register')
         else:  # if input condition length not satisfy
             flash("Not enough data to register, try again!!")
@@ -122,12 +135,11 @@ def feedback():
 @app.route('/home')
 def home():
     if 'user_id' in session:  # if user is logged-in
-        query = """select * from user_login where user_id = {} """.format(session['user_id'])
-        userdata = support.execute_query("search", query)
+        query = "SELECT * FROM user_login WHERE user_id = %s"
+        userdata = support.execute_query("search", query, (session['user_id'],))
 
-        table_query = """select * from user_expenses where user_id = {} order by pdate desc""".format(
-            session['user_id'])
-        table_data = support.execute_query("search", table_query)
+        table_query = "SELECT * FROM user_expenses WHERE user_id = %s ORDER BY pdate DESC"
+        table_data = support.execute_query("search", table_query, (session['user_id'],))
         df = pd.DataFrame(table_data, columns=['#', 'User_Id', 'Date', 'Expense', 'Amount', 'Note'])
 
         df = support.generate_df(df)
@@ -191,6 +203,14 @@ def home():
 
 @app.route('/home/add_expense', methods=['POST'])
 def add_expense():
+    try:
+        amount = float(request.form.get('amount'))
+        if amount <= 0:
+            raise ValueError
+    except ValueError:
+        flash("Invalid amount entered")
+        return redirect('/home')
+
     if 'user_id' in session:
         user_id = session['user_id']
         if request.method == 'POST':
@@ -199,9 +219,8 @@ def add_expense():
             amount = request.form.get('amount')
             notes = request.form.get('notes')
             try:
-                query = """insert into user_expenses (user_id, pdate, expense, amount, pdescription) values 
-                ({}, '{}','{}',{},'{}')""".format(user_id, date, expense, amount, notes)
-                support.execute_query('insert', query)
+                query = "INSERT INTO user_expenses (user_id, pdate, expense, amount, pdescription) VALUES (%s, %s, %s, %s, %s)"
+                support.execute_query('insert', query, (user_id, date, expense, amount, notes))
                 flash("Saved!!")
             except:
                 flash("Something went wrong.")
@@ -214,12 +233,11 @@ def add_expense():
 @app.route('/analysis')
 def analysis():
     if 'user_id' in session:  # if already logged-in
-        query = """select * from user_login where user_id = {} """.format(session['user_id'])
-        userdata = support.execute_query('search', query)
-        query2 = """select pdate,expense, pdescription, amount from user_expenses where user_id = {}""".format(
-            session['user_id'])
+        query = "SELECT * FROM user_login WHERE user_id = %s"
+        userdata = support.execute_query('search', query, (session['user_id'],))
+        query2 = "SELECT pdate,expense, pdescription, amount FROM user_expenses WHERE user_id = %s"
 
-        data = support.execute_query('search', query2)
+        data = support.execute_query('search', query2, (session['user_id'],))
         df = pd.DataFrame(data, columns=['Date', 'Expense', 'Note', 'Amount(₹)'])
         df = support.generate_df(df)
 
@@ -258,8 +276,8 @@ def analysis():
 @app.route('/profile')
 def profile():
     if 'user_id' in session:  # if logged-in
-        query = """select * from user_login where user_id = {} """.format(session['user_id'])
-        userdata = support.execute_query('search', query)
+        query = "SELECT * FROM user_login WHERE user_id = %s"
+        userdata = support.execute_query('search', query, (session['user_id'],))
         return render_template('profile.html', user_name=userdata[0][1], email=userdata[0][2])
     else:  # if not logged-in
         return redirect('/')
@@ -269,23 +287,21 @@ def profile():
 def update_profile():
     name = request.form.get('name')
     email = request.form.get("email")
-    query = """select * from user_login where user_id = {} """.format(session['user_id'])
-    userdata = support.execute_query('search', query)
-    query = """select * from user_login where email = "{}" """.format(email)
-    email_list = support.execute_query('search', query)
+    query = "SELECT * FROM user_login WHERE user_id = %s"
+    userdata = support.execute_query('search', query, (session['user_id'],))
+    query = "SELECT * FROM user_login WHERE email = %s"
+    email_list = support.execute_query('search', query, (email,))
     if name != userdata[0][1] and email != userdata[0][2] and len(email_list) == 0:
-        query = """update user_login set username = '{}', email = '{}' where user_id = '{}'""".format(name, email,
-                                                                                                      session[
-                                                                                                          'user_id'])
-        support.execute_query('insert', query)
+        query = "UPDATE user_login SET username = %s, email = %s WHERE user_id = %s"
+        support.execute_query('insert', query, (name, email, session['user_id']))
         flash("Name and Email updated!!")
         return redirect('/profile')
     elif name != userdata[0][1] and email != userdata[0][2] and len(email_list) > 0:
         flash("Email already exists, try another!!")
         return redirect('/profile')
     elif name == userdata[0][1] and email != userdata[0][2] and len(email_list) == 0:
-        query = """update user_login set email = '{}' where user_id = '{}'""".format(email, session['user_id'])
-        support.execute_query('insert', query)
+        query = "UPDATE user_login SET email = %s WHERE user_id = %s"
+        support.execute_query('insert', query, (email, session['user_id']))
         flash("Email updated!!")
         return redirect('/profile')
     elif name == userdata[0][1] and email != userdata[0][2] and len(email_list) > 0:
@@ -293,8 +309,8 @@ def update_profile():
         return redirect('/profile')
 
     elif name != userdata[0][1] and email == userdata[0][2]:
-        query = """update user_login set username = '{}' where user_id = '{}'""".format(name, session['user_id'])
-        support.execute_query('insert', query)
+        query = "UPDATE user_login SET username = %s WHERE user_id = %s"
+        support.execute_query('insert', query, (name, session['user_id']))
         flash("Name updated!!")
         return redirect("/profile")
     else:
@@ -311,5 +327,46 @@ def logout():
         return redirect('/')
 
 
+@app.route('/ask-copilot', methods=['POST'])
+def money_copilot():
+    user_question = request.json.get('question')
+    user_id = session['user_id']
+    
+    # Get full financial history
+    financial_data = support.get_financial_health(user_id)
+    
+    # Get AI response
+    answer = support.ask_money_copilot(user_question, financial_data.to_dict())
+    
+    return jsonify({"answer": answer})
+
+
+# Add custom error handler
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('500.html'), 500
+
+
+def main():
+    # Core application logic
+    print("Running main program")
+
+def load_config():
+    """Load application configuration"""
+    return {"db_host": "localhost", "db_port": 5432}
+
+def generate_text(prompt):
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    response = openai.Completion.create(
+        model="text-davinci-003",
+        prompt=prompt,
+        max_tokens=100,
+        n=1,
+        stop=None,
+        temperature=0.7,
+    )
+    return response.choices[0].message['content'].strip()
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    main()
+

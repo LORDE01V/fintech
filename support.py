@@ -5,65 +5,51 @@ import sqlite3
 import plotly
 import plotly.express as px
 import json
+import openai
+from typing import List, Dict
 
+
+# Use this function for SQLITE3
 def connect_db():
     conn = sqlite3.connect("expense.db")
     cur = conn.cursor()
     cur.execute(
-        '''CREATE TABLE IF NOT EXISTS user_login 
-           (user_id INTEGER PRIMARY KEY AUTOINCREMENT, 
-           username VARCHAR(30) NOT NULL, 
-           email VARCHAR(30) NOT NULL UNIQUE, 
-           password VARCHAR(20) NOT NULL)''')
-
-
-    return conn, cur
-
+        '''CREATE TABLE IF NOT EXISTS user_login (user_id INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(30) NOT NULL, 
+        email VARCHAR(30) NOT NULL UNIQUE, password VARCHAR(20) NOT NULL)''')
     cur.execute(
-        '''CREATE TABLE IF NOT EXISTS User_login 
-           (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-           user_id INTEGER NOT NULL, 
-           pdate DATE NOT NULL, 
-           expense VARCHAR(10) NOT NULL, 
-           amount INTEGER NOT NULL, 
-           pdescription VARCHAR(50), 
-           FOREIGN KEY (user_id) REFERENCES user_login(user_id))''')
-
-    cur.execute(
-        '''CREATE TABLE IF NOT EXISTS user_expenses 
-           (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-           user_id INTEGER NOT NULL, 
-           pdate DATE NOT NULL, 
-           expense VARCHAR(10) NOT NULL, 
-           amount INTEGER NOT NULL, 
-           pdescription VARCHAR(50), 
-           FOREIGN KEY (user_id) REFERENCES user_login(user_id))''')
+        '''CREATE TABLE IF NOT EXISTS user_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, pdate DATE NOT 
+        NULL, expense VARCHAR(10) NOT NULL, amount INTEGER NOT NULL, pdescription VARCHAR(50), FOREIGN KEY (user_id) 
+        REFERENCES user_login(user_id))''')
+    cur.execute('''CREATE TABLE IF NOT EXISTS financial_goals (
+        goal_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        goal_text TEXT NOT NULL,
+        target_amount FLOAT,
+        deadline DATE,
+        FOREIGN KEY(user_id) REFERENCES user_login(user_id)
+    )''')
     conn.commit()
     return conn, cur
 
 
- #Use this function for SQLITE3
-
-
-
- #Use this function for mysql
+# Use this function for mysql
 # import mysql.connector  # pip install mysql-connector-python
 # def connect_db(host="localhost", user="root", passwd="123456", port=3306, database='expense',
-#                 auth_plugin='mysql_native_password'):
-#      """
-#      Connect to database
-#      :param host: host
-#      :param user: username
+#                auth_plugin='mysql_native_password'):
+#     """
+#     Connect to database
+#     :param host: host
+#     :param user: username
 #     :param passwd: password
-#      :param port: port no
+#     :param port: port no
 #     :param database: database name
-#      :param auth_plugin: plugin
-#      :return: connection, cursor
-#      """
-#      conn = mysql.connector.connect(host=host, user=user, passwd=passwd, port=port, database=database,
-#                                     auth_plugin=auth_plugin)
-   # cursor = conn.cursor()
-    #return conn, cursor
+#     :param auth_plugin: plugin
+#     :return: connection, cursor
+#     """
+#     conn = mysql.connector.connect(host=host, user=user, passwd=passwd, port=port, database=database,
+#                                    auth_plugin=auth_plugin)
+#     cursor = conn.cursor()
+#     return conn, cursor
 
 
 def close_db(connection=None, cursor=None):
@@ -77,7 +63,7 @@ def close_db(connection=None, cursor=None):
     connection.close()
 
 
-def execute_query(operation=None, query=None):
+def execute_query(operation=None, query=None, params=()):
     """
     Execute Query
     :param operation:
@@ -85,17 +71,18 @@ def execute_query(operation=None, query=None):
     :return: data incase search query or write to database
     """
     connection, cursor = connect_db()
-    if operation == 'search':
-        cursor.execute(query)
-        data = cursor.fetchall()
-        cursor.close()
-        return data
-    elif operation == 'insert':
-        cursor.execute(query)
-        connection.commit()
+    try:
+        if operation == 'search':
+            cursor.execute(query, params)
+            data = cursor.fetchall()
+            return data
+        elif operation == 'insert':
+            cursor.execute(query, params)
+            connection.commit()
+            return None
+    finally:
         cursor.close()
         connection.close()
-        return None
 
 
 def generate_df(df):
@@ -438,3 +425,45 @@ def meraSunburst(df=None, height=None, width=None):
     fig.update_layout(margin=dict(l=1, r=1, t=1, b=1), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     fig.update(layout_showlegend=False)
     return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+
+def ask_money_copilot(question: str, financial_data: List[Dict]) -> str:
+    messages = [
+        {"role": "system", "content": "You're a financial expert analyzing this user data: " + str(financial_data)},
+        {"role": "user", "content": question}
+    ]
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=messages
+    )
+    return response.choices[0].message['content']
+
+
+def get_financial_health(user_id: int) -> Dict:
+    # Gets user's complete financial picture
+    conn, cur = connect_db()
+    cur.execute("SELECT * FROM user_expenses WHERE user_id=?", (user_id,))
+    data = cur.fetchall()
+    conn.close()
+    return pd.DataFrame(data, columns=['id','user_id','date','category','amount','note'])
+
+
+def generate_budget_advice(spending_data: pd.DataFrame) -> str:
+    # Uses AI to make budget suggestions
+    return ask_money_copilot("Create budget advice based on this spending:", spending_data)
+
+
+def detect_overspending(df: pd.DataFrame) -> List[str]:
+    # Finds categories where spending > budget
+    alerts = []
+    for category in df['Expense'].unique():
+        spent = df[df['Expense'] == category]['Amount'].sum()
+        if spent > 10000:  # Example threshold
+            alerts.append(f"Overspending in {category}: ₹{spent}")
+    return alerts
+
+
+def predict_future_savings(df: pd.DataFrame) -> float:
+    # Predicts next month's savings
+    savings = df[df['Expense'] == 'Saving']['Amount']
+    return savings.mean() * 1.1  # Simple 10% growth prediction
