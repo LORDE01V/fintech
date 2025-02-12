@@ -8,15 +8,17 @@ import json
 import warnings
 import support
 from dotenv import load_dotenv  # Add this
-import openai
+from openai import OpenAI
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_cors import CORS  # Add this import
 
 warnings.filterwarnings("ignore")
 
 load_dotenv()  # Add this to load .env file
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+CORS(app)  # Add this line after creating Flask app
+app.secret_key = os.getenv("FLASK_SECRET_KEY", os.urandom(24))  # Use proper secret key
 app.permanent_session_lifetime = timedelta(minutes=15)
 
 app.config.update(
@@ -27,6 +29,15 @@ app.config.update(
 
 # Get the API key (works with both conda env vars and .env file)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Access key here
+
+# Add OpenAI client initialization
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
+)
+
+# Add validation check
+if not client.api_key:
+    raise ValueError("No OpenAI API key found. Set OPENAI_API_KEY in .env file")
 
 @app.route('/')
 def login():
@@ -41,16 +52,16 @@ def login():
 
 @app.route('/login_validation', methods=['POST'])
 def login_validation():
-    if 'user_id' not in session:  # if user not logged-in
+    if 'user_id' not in session:
         email = request.form.get('email')
         passwd = request.form.get('password')
-        query = """SELECT * FROM user_login WHERE email = %s AND password = %s"""
-        users = support.execute_query("search", query, (email, passwd))
-        if users and check_password_hash(users[0][3], passwd):  # Verify hash
+        query = "SELECT * FROM user_login WHERE email = ?"
+        users = support.execute_query("search", query, (email,))
+        if users and check_password_hash(users[0][3], passwd):  # Verify hash properly
             session['user_id'] = users[0][0]
             return redirect('/home')
-        else:  # if user details not matched in db
-            flash("Invalid email and password!")
+        else:
+            flash("Invalid email or password!")
             return redirect('/')
     else:  # if user already logged-in
         flash("Already a user is logged-in!")
@@ -61,12 +72,14 @@ def login_validation():
 def reset():
     if 'user_id' not in session:
         email = request.form.get('femail')
-        pswd = request.form.get('pswd')
-        userdata = support.execute_query('search', "SELECT * FROM user_login WHERE email LIKE %s", (email,))
+        passwd = request.form.get('password')
+        hashed_password = generate_password_hash(passwd)  # Use corrected variable name
+        query = "SELECT * FROM user_login WHERE email = ?"
+        userdata = support.execute_query('search', query, (email,))
         if len(userdata) > 0:
             try:
-                query = "UPDATE user_login SET password = %s WHERE email = %s"
-                support.execute_query('insert', query, (pswd, email))
+                query = "UPDATE user_login SET password = ? WHERE email = ?"
+                support.execute_query('insert', query, (hashed_password, email))  # Store hashed password
                 flash("Password has been changed!!")
                 return redirect('/')
             except:
@@ -90,17 +103,18 @@ def register():
 
 @app.route('/registration', methods=['POST'])
 def registration():
-    if 'user_id' not in session:  # if not logged-in
+    if 'user_id' not in session:
         name = request.form.get('name')
         email = request.form.get('email')
         passwd = request.form.get('password')
-        if len(name) > 5 and len(email) > 10 and len(passwd) > 5:  # if input details satisfy length condition
+        if len(name) > 2 and len(email) > 5 and len(passwd) > 3:  # More reasonable validation
             try:
                 hashed_password = generate_password_hash(passwd)  # Hash password
-                query = "INSERT INTO user_login(username, email, password) VALUES(%s,%s,%s)"
+                query = "INSERT INTO user_login(username, email, password) VALUES(?,?,?)"
                 support.execute_query('insert', query, (name, email, hashed_password))  # Store hash
 
-                user = support.execute_query('search', "SELECT * FROM user_login WHERE email LIKE %s", (email,))
+                query = "SELECT * FROM user_login WHERE email = ?"
+                user = support.execute_query('search', query, (email,))
                 session['user_id'] = user[0][0]  # set session on successful registration
                 flash("Successfully Registered!!")
                 return redirect('/home')
@@ -114,7 +128,26 @@ def registration():
     else:  # if already logged-in
         flash("Already a user is logged-in!")
         return redirect('/home')
+@app.route('/add_customer', methods=['POST'])
+def add_customer():
+    if 'user_id' in session:
+        first_name = request.form.get('firstName')
+        last_name = request.form.get('lastName')
+        dob = request.form.get('dob')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        address = request.form.get('address')
 
+        query = '''INSERT INTO Customers 
+                   (FirstName, LastName, DateOfBirth, Email, Phone, Address)
+                   VALUES (?, ?, ?, ?, ?, ?)'''
+        try:
+            support.execute_query('insert', query, 
+                                 (first_name, last_name, dob, email, phone, address))
+            flash("Customer added successfully!")
+        except sqlite3.IntegrityError:
+            flash("Email already exists!")
+        return redirect('/customers')
 
 @app.route('/contact')
 def contact():
@@ -135,10 +168,10 @@ def feedback():
 @app.route('/home')
 def home():
     if 'user_id' in session:  # if user is logged-in
-        query = "SELECT * FROM user_login WHERE user_id = %s"
+        query = "SELECT * FROM user_login WHERE user_id = ?"
         userdata = support.execute_query("search", query, (session['user_id'],))
 
-        table_query = "SELECT * FROM user_expenses WHERE user_id = %s ORDER BY pdate DESC"
+        table_query = "SELECT * FROM user_expenses WHERE user_id = ? ORDER BY pdate DESC"
         table_data = support.execute_query("search", table_query, (session['user_id'],))
         df = pd.DataFrame(table_data, columns=['#', 'User_Id', 'Date', 'Expense', 'Amount', 'Note'])
 
@@ -219,7 +252,7 @@ def add_expense():
             amount = request.form.get('amount')
             notes = request.form.get('notes')
             try:
-                query = "INSERT INTO user_expenses (user_id, pdate, expense, amount, pdescription) VALUES (%s, %s, %s, %s, %s)"
+                query = "INSERT INTO user_expenses (user_id, pdate, expense, amount, pdescription) VALUES (?, ?, ?, ?, ?)"
                 support.execute_query('insert', query, (user_id, date, expense, amount, notes))
                 flash("Saved!!")
             except:
@@ -233,9 +266,9 @@ def add_expense():
 @app.route('/analysis')
 def analysis():
     if 'user_id' in session:  # if already logged-in
-        query = "SELECT * FROM user_login WHERE user_id = %s"
+        query = "SELECT * FROM user_login WHERE user_id = ?"
         userdata = support.execute_query('search', query, (session['user_id'],))
-        query2 = "SELECT pdate,expense, pdescription, amount FROM user_expenses WHERE user_id = %s"
+        query2 = "SELECT pdate,expense, pdescription, amount FROM user_expenses WHERE user_id = ?"
 
         data = support.execute_query('search', query2, (session['user_id'],))
         df = pd.DataFrame(data, columns=['Date', 'Expense', 'Note', 'Amount(₹)'])
@@ -276,7 +309,7 @@ def analysis():
 @app.route('/profile')
 def profile():
     if 'user_id' in session:  # if logged-in
-        query = "SELECT * FROM user_login WHERE user_id = %s"
+        query = "SELECT * FROM user_login WHERE user_id = ?"
         userdata = support.execute_query('search', query, (session['user_id'],))
         return render_template('profile.html', user_name=userdata[0][1], email=userdata[0][2])
     else:  # if not logged-in
@@ -287,12 +320,12 @@ def profile():
 def update_profile():
     name = request.form.get('name')
     email = request.form.get("email")
-    query = "SELECT * FROM user_login WHERE user_id = %s"
+    query = "SELECT * FROM user_login WHERE user_id = ?"
     userdata = support.execute_query('search', query, (session['user_id'],))
-    query = "SELECT * FROM user_login WHERE email = %s"
+    query = "SELECT * FROM user_login WHERE email = ?"
     email_list = support.execute_query('search', query, (email,))
     if name != userdata[0][1] and email != userdata[0][2] and len(email_list) == 0:
-        query = "UPDATE user_login SET username = %s, email = %s WHERE user_id = %s"
+        query = "UPDATE user_login SET username = ?, email = ? WHERE user_id = ?"
         support.execute_query('insert', query, (name, email, session['user_id']))
         flash("Name and Email updated!!")
         return redirect('/profile')
@@ -300,7 +333,7 @@ def update_profile():
         flash("Email already exists, try another!!")
         return redirect('/profile')
     elif name == userdata[0][1] and email != userdata[0][2] and len(email_list) == 0:
-        query = "UPDATE user_login SET email = %s WHERE user_id = %s"
+        query = "UPDATE user_login SET email = ? WHERE user_id = ?"
         support.execute_query('insert', query, (email, session['user_id']))
         flash("Email updated!!")
         return redirect('/profile')
@@ -309,7 +342,7 @@ def update_profile():
         return redirect('/profile')
 
     elif name != userdata[0][1] and email == userdata[0][2]:
-        query = "UPDATE user_login SET username = %s WHERE user_id = %s"
+        query = "UPDATE user_login SET username = ? WHERE user_id = ?"
         support.execute_query('insert', query, (name, session['user_id']))
         flash("Name updated!!")
         return redirect("/profile")
@@ -361,12 +394,24 @@ def generate_text(prompt):
         model="text-davinci-003",
         prompt=prompt,
         max_tokens=100,
-        n=1,
-        stop=None,
         temperature=0.7,
     )
-    return response.choices[0].message['content'].strip()
+    return response.choices[0].text.strip()  # Fix attribute access
+
+# Add this API endpoint for chat completions
+@app.route('/api/ask', methods=['POST'])
+def ask_ai():
+    try:
+        data = request.get_json()
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": data['question']}]
+        )
+        return jsonify({
+            "answer": response.choices[0].message.content
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    main()
-
+    app.run(host='0.0.0.0', port=5000, debug=True)  # Update run configuration

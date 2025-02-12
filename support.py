@@ -13,6 +13,19 @@ from typing import List, Dict
 def connect_db():
     conn = sqlite3.connect("expense.db")
     cur = conn.cursor()
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS Customers (
+        CustomerID INTEGER PRIMARY KEY AUTOINCREMENT,
+        FirstName TEXT NOT NULL,
+        LastName TEXT NOT NULL,
+        DateOfBirth TEXT NOT NULL,
+        Email TEXT UNIQUE NOT NULL,
+        Phone TEXT NOT NULL,
+        Address TEXT NOT NULL,
+        CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
+
     cur.execute(
         '''CREATE TABLE IF NOT EXISTS user_login (user_id INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(30) NOT NULL, 
         email VARCHAR(30) NOT NULL UNIQUE, password VARCHAR(20) NOT NULL)''')
@@ -20,13 +33,23 @@ def connect_db():
         '''CREATE TABLE IF NOT EXISTS user_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, pdate DATE NOT 
         NULL, expense VARCHAR(10) NOT NULL, amount INTEGER NOT NULL, pdescription VARCHAR(50), FOREIGN KEY (user_id) 
         REFERENCES user_login(user_id))''')
+    
     cur.execute('''CREATE TABLE IF NOT EXISTS financial_goals (
         goal_id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         goal_text TEXT NOT NULL,
         target_amount FLOAT,
         deadline DATE,
-        FOREIGN KEY(user_id) REFERENCES user_login(user_id)
+        FOREIGN KEY(user_id) REFERENCES user_login(user_id))''')
+    
+        
+    cur.execute(''' CREATE TABLE IF NOT EXISTS Accounts(
+        AccountID INT PRIMARY KEY,
+        CustomerID INT,
+        AccountType VARCHAR(50),
+        Balance DECIMAL(15, 2),
+        CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
     )''')
     conn.commit()
     return conn, cur
@@ -66,9 +89,10 @@ def close_db(connection=None, cursor=None):
 def execute_query(operation=None, query=None, params=()):
     """
     Execute Query
-    :param operation:
-    :param query:
-    :return: data incase search query or write to database
+    :param operation: 'search' or 'insert'
+    :param query: SQL query with ? placeholders
+    :param params: Tuple of parameters
+    :return: data for search, None for insert
     """
     connection, cursor = connect_db()
     try:
@@ -80,8 +104,14 @@ def execute_query(operation=None, query=None, params=()):
             cursor.execute(query, params)
             connection.commit()
             return None
+        else:
+            raise ValueError("Invalid operation type")
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        if operation == 'insert':
+            connection.rollback()
+        raise  # Re-raise the exception for handling upstream
     finally:
-        cursor.close()
         connection.close()
 
 
