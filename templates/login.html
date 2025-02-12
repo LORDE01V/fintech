@@ -12,92 +12,118 @@
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <title>NexGen Finance - Login</title>
   </head>
-  <body class="body">
-<!--  Creating navbar-->
+  <body class="body d-flex flex-column min-vh-100">
     <nav class="navbar bg-nav">
         <a href="" class="navbar-brand text-light">NexGen Finance</a>
-
     </nav>
-<!--  creating a main div  -->
-    <div class="container">
-<!--     creating a row-->
-      <div class="row">
-<!--        dividing above row into two columns 8 and 4 (12 is max grid shape)-->
-        <div class="col-md-8">
-<!--          adding text in first columns-->
-          <h1 class="text-light display-4 mt-50" style="font-size:70px">Take charge of your finances with advanced expense tracking and visualization capabilities</h1>
-        </div>
-        <div class="col-md-4">
-<!--          this is second columns, adding login section in this -->
+
+    <div class="container flex-grow-1 d-flex align-items-center">
+      <div class="row w-100 justify-content-center">
+        <!-- Centered Login Form -->
+        <div class="col-md-6 col-lg-4">
             {% for message in get_flashed_messages() %}
-         <div class="alert alert-warning alert-dismissible fade show my-1" id="alert" role="alert">
-                    {{ message }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-         {% endfor %}
-          <div class="card mt-50">
-            <div class="card-body">
-                  <form class="form" method="post" action="/login_validation">
-                    <label>Email</label><br>
-                    <input type="email" class="form-control" name="email" placeholder="Enter your registered email" required><br>
-                    <label>Password</label><br>
-                    <input type="password" class="form-control" name="password" placeholder="Enter your password" required><br><br>
-                    <input type="submit" class="btn btn-primary btn-block btn-lg" value="Login">
-                  </form>
-                <!-- Reset Password -->
-                <div class="row">
-                    <div class="col my-1">
-                            <div class="form-check m-1">
-                            <input class="form-check-input my-2" type="checkbox" value="" id="form2Example31"/>
-                            <label class="form-check-label text-primary" for="form2Example31"> Remember me </label>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <p class="mt-2" data-toggle="modal" data-target="#password_reset"><a href="#password_reset">Forget Password?</a></p>
-                    </div>
-                </div>
-
-                <!-- Modal -->
-                <div class="modal top fade" id="password_reset" tabindex="-1" aria-labelledby="exampleModalLabel"
-                 aria-hidden="true" data-mdb-backdrop="true" data-mdb-keyboard="true">
-                    <div class="modal-dialog" style="width: 300px;">
-                    <div class="modal-content text-center">
-                        <div class="modal-header h5 text-white bg-primary justify-content-center">
-                            Password Reset
-                        </div>
-                        <div class="modal-body px-5">
-                            <p class="py-2">
-                                Enter your registered email address to reset your password.
-                            </p>
-                            <form class="form" method="post" action="/reset">
-                                <input type="email" class="form-control " id="femail" name="femail" placeholder="Enter registered email" required>
-                                <input type="password" class="form-control my-1"  name="pswd" placeholder="Enter New Password" required><br>
-                                <input type="submit" class="btn my-2 btn-primary btn-block" id="reset" name="reset" value="Reset">
-
-                            </form>
-                            <div class="d-flex justify-content-between mt-4">
-                                <a class="" href="/">Login</a>
-                                <a class="" href="/register">Register</a>
+            <div class="alert alert-warning alert-dismissible fade show my-1" id="alert" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endfor %}
+            
+            <div class="card">
+                <div class="card-body">
+                      <form class="form" method="post" action="/login_validation">
+                        <label>Email</label><br>
+                        <input type="email" class="form-control" name="email" placeholder="Enter your registered email" required><br>
+                        <label>Password</label><br>
+                        <input type="password" class="form-control" name="password" placeholder="Enter your password" required><br><br>
+                        <input type="submit" class="btn btn-primary btn-block btn-lg" value="Login">
+                      </form>
+                    <!-- Reset Password -->
+                    <div class="row">
+                        <div class="col my-1">
+                                <div class="form-check m-1">
+                                <input class="form-check-input my-2" type="checkbox" value="" id="form2Example31"/>
+                                <label class="form-check-label text-primary" for="form2Example31"> Remember me </label>
                             </div>
                         </div>
+                        <div class="col">
+                            <p class="mt-2" data-toggle="modal" data-target="#password_reset"><a href="#password_reset">Forget Password?</a></p>
+                        </div>
                     </div>
+
+                    <!-- Modal -->
+                    <div class="modal top fade" id="password_reset" tabindex="-1" aria-labelledby="exampleModalLabel"
+                     aria-hidden="true" data-mdb-backdrop="true" data-mdb-keyboard="true">
+                        <div class="modal-dialog" style="width: 300px;">
+                        <div class="modal-content text-center">
+                            <div class="modal-header h5 text-white bg-primary justify-content-center">
+                                Password Reset
+                            </div>
+                            <div class="modal-body px-5">
+                                <p class="py-2">
+                                    Enter your registered email address to reset your password.
+                                </p>
+                                <form class="form" method="post" action="/reset">
+                                    <input type="email" class="form-control " id="femail" name="femail" placeholder="Enter registered email" required>
+                                    <input type="password" class="form-control my-1"  name="pswd" placeholder="Enter New Password" required><br>
+                                    <input type="submit" class="btn my-2 btn-primary btn-block" id="reset" name="reset" value="Reset">
+
+                                </form>
+                                <div class="d-flex justify-content-between mt-4">
+                                    <a class="" href="/">Login</a>
+                                    <a class="" href="/register">Register</a>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
                     </div>
+                  <p class="mt-2">Not a member? <a href="/register">Register</a></p>
+                    <p class="mt-2">Any Query? <a href="/contact">Contact Us</a> </p>
                 </div>
-              <p class="mt-2">Not a member? <a href="/register">Register</a></p>
-                <p class="mt-2">Any Query? <a href="/contact">Contact Us</a> </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-<script type="text/javascript">
-        setTimeout(function () {
-                    // Closing the alert
-                    $('#alert').alert('close');
-                }, 3000);
-    </script>
+
+    <!-- Animated Text Banner -->
+    <div class="marquee-container mt-auto py-3 bg-dark">
+        <div class="marquee-text">
+            Take charge of your finances with advanced expense tracking and visualization capabilities
+        </div>
+    </div>
+
+    <style>
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .marquee-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 15s linear infinite;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+    </style>
+
+    <script type="text/javascript">
+            setTimeout(function () {
+                        // Closing the alert
+                        $('#alert').alert('close');
+                    }, 3000);
+        </script>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
