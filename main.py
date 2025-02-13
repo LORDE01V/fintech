@@ -39,6 +39,8 @@ client = OpenAI(
 if not client.api_key:
     raise ValueError("No OpenAI API key found. Set OPENAI_API_KEY in .env file")
 
+NEW_AI_FEATURE = os.getenv("ENABLE_NEW_AI_FEATURE", "false").lower() == "true"
+
 @app.route('/')
 def login():
     session.permanent = True
@@ -412,6 +414,49 @@ def ask_ai():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/new-ai-endpoint')
+def new_ai_feature():
+    if not NEW_AI_FEATURE:
+        return jsonify({"status": "feature disabled"}), 501
+    # New OpenAI integration code here
+    return jsonify({"result": "new feature response"})
+
+if os.getenv('ENABLE_SUBSCRIPTION_PREDICTOR', 'false').lower() == 'true':
+    @app.route('/predict-subscriptions', methods=['GET'])
+    def predict_subscriptions():
+        if 'user_id' not in session:  # Add authorization check
+            return jsonify({"error": "Unauthorized"}), 401
+        
+        user_id = session['user_id']  # Get from session
+        transactions = support.get_recurring_payments(user_id)  # Pass user_id to query
+        
+        forecast = support.time_series_forecast(dates, amounts)
+        visualization = support.generate_forecast_chart(forecast)
+        
+        return jsonify({
+            "prediction": forecast.tolist(),
+            "chart": visualization
+        })
+
+@app.route('/financial-personality', methods=['GET'])
+def financial_personality():
+    user_id = session['user_id']
+    transactions = support.get_transaction_history(user_id)
+    analysis = support.analyze_spending_patterns(transactions)
+    
+    prompt = f"""
+    Analyze this financial behavior: {analysis}
+    Generate a personality type (e.g., 'Cautious Conservator', 'Bold Investor') 
+    with 3 actionable insights and 1 emoji representation.
+    """
+    
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+    return jsonify({"persona": response.choices[0].message.content})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)  # Update run configuration

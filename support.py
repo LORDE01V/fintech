@@ -497,3 +497,19 @@ def predict_future_savings(df: pd.DataFrame) -> float:
     # Predicts next month's savings
     savings = df[df['Expense'] == 'Saving']['Amount']
     return savings.mean() * 1.1  # Simple 10% growth prediction
+
+
+def get_recurring_payments(user_id):
+    """New function - doesn't modify existing code"""
+    query = "SELECT date, amount FROM transactions WHERE user_id = ? AND is_recurring = 1"
+    return execute_query("search", query, (user_id,))
+
+def time_series_forecast(dates, amounts):
+    """New standalone forecast logic"""
+    if len(amounts) < 5: return []
+    # Simple moving average implementation
+    return [sum(amounts[-5:])/5] * 3  # Example 3-period forecast
+
+def generate_forecast_chart(dates, amounts):
+    """New chart generation"""
+    return f"Chart placeholder for {len(amounts)} transactions"
