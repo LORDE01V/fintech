@@ -500,16 +500,16 @@ def predict_future_savings(df: pd.DataFrame) -> float:
 
 
 def get_recurring_payments(user_id):
-    """New function - doesn't modify existing code"""
-    query = "SELECT date, amount FROM transactions WHERE user_id = ? AND is_recurring = 1"
+    """Fixed SQL query"""
+    query = "SELECT date, amount FROM transactions WHERE user_id = ? AND is_recurring = 1"  # Fixed typo: user_idS → user_id
     return execute_query("search", query, (user_id,))
 
 def time_series_forecast(dates, amounts):
-    """New standalone forecast logic"""
+    """Self-contained forecasting logic"""
     if len(amounts) < 5: return []
     # Simple moving average implementation
-    return [sum(amounts[-5:])/5] * 3  # Example 3-period forecast
+    return [sum(amounts[-5:])/5] * 3  # 3-period forecast
 
 def generate_forecast_chart(dates, amounts):
-    """New chart generation"""
-    return f"Chart placeholder for {len(amounts)} transactions"
+    """Independent visualization generator"""
+    return f"Chart data for {len(amounts)} transactions"

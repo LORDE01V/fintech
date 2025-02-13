@@ -433,6 +433,7 @@ if os.getenv('ENABLE_SUBSCRIPTION_PREDICTOR', 'false').lower() == 'true':
         
         forecast = support.time_series_forecast(dates, amounts)
         visualization = support.generate_forecast_chart(forecast)
+        visualization = support.sanitize_chart(visualization)  # Prevent XSS in charts
         
         return jsonify({
             "prediction": forecast.tolist(),
