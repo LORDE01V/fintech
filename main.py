@@ -92,9 +92,12 @@ def reset():
         return redirect('/home')
 
 
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    # Existing user registration
+    if request.method == 'GET':
+        return render_template("register.html")
+    
+    # Existing POST handling
     username = request.form.get('username')
     email = request.form.get('email')
     password = generate_password_hash(request.form.get('password'))
