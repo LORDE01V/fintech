@@ -15,6 +15,17 @@
         <title>NexGen Finance - Home</title>
     </head>
     <body class="page-bg">
+     <style>
+        .page-bg {
+            background-image: url("{{ url_for('static', filename='app background image.avif') }}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .card, .table, .panel {
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+     </style>
      <div class="bg-nav d-flex flex-column flex-md-row align-items-center pb-0 mb-0 border-bottom">
       <h5 class="m-3 mr-md-auto font-weight-normal"><a href="/" style="text-decoration : none">NexGen Finance - {{ user_name }}</a></h5>
 

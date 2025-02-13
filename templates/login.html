@@ -13,6 +13,24 @@
     <title>NexGen Finance - Login</title>
   </head>
   <body class="body d-flex flex-column min-vh-100">
+    <style>
+        .body {
+            background-image: url("{{ url_for('static', filename='app background image.avif') }}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.5) !important;
+        }
+        .transparent-input {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .transparent-input:focus {
+            background-color: rgba(255, 255, 255, 0.3) !important;
+        }
+    </style>
     <nav class="navbar bg-nav">
         <a href="" class="navbar-brand text-light">NexGen Finance</a>
     </nav>
@@ -31,12 +49,12 @@
             {% endfor %}
             
             <div class="card">
-                <div class="card-body">
+                <div class="card-body" style="background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px);">
                       <form class="form" method="post" action="/login_validation">
                         <label>Email</label><br>
-                        <input type="email" class="form-control" name="email" placeholder="Enter your registered email" required><br>
+                        <input type="email" class="form-control transparent-input" name="email" placeholder="Enter your registered email" required><br>
                         <label>Password</label><br>
-                        <input type="password" class="form-control" name="password" placeholder="Enter your password" required><br><br>
+                        <input type="password" class="form-control transparent-input" name="password" placeholder="Enter your password" required><br><br>
                         <input type="submit" class="btn btn-primary btn-block btn-lg" value="Login">
                       </form>
                     <!-- Reset Password -->
@@ -96,26 +114,6 @@
     </div>
 
     <style>
-        .body {
-            background-image: url("{{ url_for('static', filename='app background image.avif') }}");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;
-            min-height: 100vh;
-        }
-
-        /* Make card transparent */
-        .card {
-            background-color: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Optional: Improve form control visibility */
-        .form-control {
-            background-color: rgba(255, 255, 255, 0.8);
-        }
-
         .marquee-container {
             overflow: hidden;
             white-space: nowrap;

@@ -106,6 +106,23 @@
 
         /* Improve contrast for form elements */
         .form-control {
-            background-color: rgba(255, 255, 255, 0.8) !important;
+            background-color: #ffffff !important;
+        }
+
+        .transparent-input {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .transparent-input:focus {
+            background-color: rgba(255, 255, 255, 0.3) !important;
+        }
+        
+        .card {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+        }
+        
+        .form-control::placeholder {
+            color: #666;
         }
     </style>
