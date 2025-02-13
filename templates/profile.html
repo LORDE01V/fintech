@@ -1,79 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- ... existing head content ... -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - NexGen Finance</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css">
     <style>
         body {
-            background-image: url("{{ url_for('static', filename='app background image.avif') }}");
+            background-image: url("{{ url_for('static', filename='background.jpg') }}");
             background-size: cover;
             background-repeat: no-repeat;
             background-attachment: fixed;
+            /* Add fallback background color */
+            background-color: #f0f2f5;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            background: rgba(0, 0, 0, 0.8);
+            /* Ensure sidebar stays on top */
+            z-index: 1000;
+            padding: 20px;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
         }
         .tab-content .tab-pane {
             background-color: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(5px);
-            padding: 20px;
             border-radius: 8px;
+            padding: 20px;
+            margin-top: 1rem;
         }
         .form-control {
             background-color: rgba(255, 255, 255, 0.3) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <div class="row">
-            <!-- Profile Picture Section -->
-            <div class="col-md-4 text-center">
-                <!-- ... existing profile section ... -->
-                <!-- Add Profile Picture Upload Form -->
-                <form method="post" action="/uploadphoto" enctype="multipart/form-data" class="mt-3">
-                    <div class="form-group">
-                        <input type="file" class="form-control-file" name="profile_pic" accept="image/*" required>
-                    </div>
-                    <button type="submit" class="btn btn-sm btn-outline-success">Update Photo</button>
-                </form>
-            </div>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <a href="/" class="navbar-brand text-light d-block text-center py-3 mb-4">NexGen Finance</a>
+        <nav class="nav flex-column">
+            <a class="nav-link text-light" href="/home">Home</a>
+            <a class="nav-link text-light" href="/profile">Profile</a>
+            <a class="nav-link text-light" href="/analysis">Analysis</a>
+            <a class="nav-link text-warning mt-4" href="/logout">Logout</a>
+        </nav>
+    </div>
 
-            <!-- ... existing tab navigation ... -->
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <h2>User Profile</h2>
+            
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-tabs mt-4">
+                <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#details">Details</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#security">Security</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#about">About Me</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-danger" data-toggle="tab" href="#danger">Danger Zone</a>
+                </li>
+            </ul>
 
-            <!-- Add new tab content sections -->
+            <!-- Tab Content -->
             <div class="tab-content">
-                <!-- ... existing details tab ... -->
+                <!-- Details Tab -->
+                <div class="tab-pane container active" id="details">
+                    <form method="post" action="/updateprofile">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" class="form-control" name="fullname" value="{{ user.fullname }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" class="form-control" name="email" value="{{ user.email }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </form>
+                </div>
 
-                <!-- Password Change Tab -->
+                <!-- Security Tab -->
                 <div class="tab-pane container fade" id="security">
-                    <form method="post" action="/changepassword" class="mt-3">
+                    <form method="post" action="/changepassword">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="form-group">
                             <label>Current Password</label>
                             <input type="password" class="form-control" name="current_password" required>
                         </div>
-                        <!-- ... other password fields ... -->
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" class="form-control" name="new_password" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm New Password</label>
+                            <input type="password" class="form-control" name="confirm_password" required>
+                        </div>
                         <button type="submit" class="btn btn-warning">Change Password</button>
                     </form>
                 </div>
 
                 <!-- About Me Tab -->
                 <div class="tab-pane container fade" id="about">
-                    <form method="post" action="/updatebio" class="mt-3">
+                    <form method="post" action="/updatebio">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="form-group">
-                            <textarea class="form-control" name="about_me" rows="4">{{ about_me or '' }}</textarea>
+                            <textarea class="form-control" name="about_me" rows="4" 
+                                placeholder="Tell us something about yourself...">{{ about_me or '' }}</textarea>
                         </div>
                         <button type="submit" class="btn btn-info">Update Bio</button>
                     </form>
                 </div>
 
-                <!-- Delete Account Section -->
+                <!-- Danger Zone Tab -->
                 <div class="tab-pane container fade" id="danger">
-                    <form method="post" action="/deleteaccount" class="mt-4" 
-                          onsubmit="return confirm('This will permanently delete your account! Continue?');">
-                        <button type="submit" class="btn btn-danger">Delete Account</button>
-                    </form>
+                    <div class="mt-4">
+                        <form method="post" action="/deleteaccount" 
+                            onsubmit="return confirm('Permanently delete your account? This cannot be undone!');">
+                            <button type="submit" class="btn btn-danger">Delete Account</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ... existing scripts ... -->
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"></script>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 </body>
 </html>
