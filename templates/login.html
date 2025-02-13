@@ -30,86 +30,98 @@
         .transparent-input:focus {
             background-color: rgba(255, 255, 255, 0.3) !important;
         }
+        .bg-nav {
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
     </style>
-    <nav class="navbar bg-nav">
-        <a href="" class="navbar-brand text-light">NexGen Finance</a>
-    </nav>
+    <div class="d-flex flex-column" style="min-height: 100vh;">
+        <!-- Sidebar Navigation -->
+        <div class="position-fixed h-100 bg-nav p-3" style="width: 250px; z-index: 1000;">
+            <a href="/" class="navbar-brand text-light d-block text-center py-3 mb-4">NexGen Finance</a>
+            <!-- Add more sidebar items here if needed -->
+        </div>
 
-    <div class="container flex-grow-1 d-flex align-items-center">
-      <div class="row w-100 justify-content-center">
-        <!-- Centered Login Form -->
-        <div class="col-md-6 col-lg-4">
-            {% for message in get_flashed_messages() %}
-            <div class="alert alert-warning alert-dismissible fade show my-1" id="alert" role="alert">
-                {{ message }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            {% endfor %}
-            
-            <div class="card">
-                <div class="card-body" style="background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px);">
-                      <form class="form" method="post" action="/login_validation">
-                        <label>Email</label><br>
-                        <input type="email" class="form-control transparent-input" name="email" placeholder="Enter your registered email" required><br>
-                        <label>Password</label><br>
-                        <input type="password" class="form-control transparent-input" name="password" placeholder="Enter your password" required><br><br>
-                        <input type="submit" class="btn btn-primary btn-block btn-lg" value="Login">
-                      </form>
-                    <!-- Reset Password -->
-                    <div class="row">
-                        <div class="col my-1">
-                                <div class="form-check m-1">
-                                <input class="form-check-input my-2" type="checkbox" value="" id="form2Example31"/>
-                                <label class="form-check-label text-primary" for="form2Example31"> Remember me </label>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <p class="mt-2" data-toggle="modal" data-target="#password_reset"><a href="#password_reset">Forget Password?</a></p>
-                        </div>
+        <!-- Main Content -->
+        <div class="flex-grow-1 ms-auto" style="margin-left: 250px; padding-bottom: 2.5rem;">
+            <div class="container flex-grow-1 d-flex align-items-center">
+              <div class="row w-100 justify-content-center">
+                <!-- Centered Login Form -->
+                <div class="col-md-6 col-lg-4">
+                    {% for message in get_flashed_messages() %}
+                    <div class="alert alert-warning alert-dismissible fade show my-1" id="alert" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-
-                    <!-- Modal -->
-                    <div class="modal top fade" id="password_reset" tabindex="-1" aria-labelledby="exampleModalLabel"
-                     aria-hidden="true" data-mdb-backdrop="true" data-mdb-keyboard="true">
-                        <div class="modal-dialog" style="width: 300px;">
-                        <div class="modal-content text-center">
-                            <div class="modal-header h5 text-white bg-primary justify-content-center">
-                                Password Reset
-                            </div>
-                            <div class="modal-body px-5">
-                                <p class="py-2">
-                                    Enter your registered email address to reset your password.
-                                </p>
-                                <form class="form" method="post" action="/reset">
-                                    <input type="email" class="form-control " id="femail" name="femail" placeholder="Enter registered email" required>
-                                    <input type="password" class="form-control my-1"  name="pswd" placeholder="Enter New Password" required><br>
-                                    <input type="submit" class="btn my-2 btn-primary btn-block" id="reset" name="reset" value="Reset">
-
-                                </form>
-                                <div class="d-flex justify-content-between mt-4">
-                                    <a class="" href="/">Login</a>
-                                    <a class="" href="/register">Register</a>
+                    {% endfor %}
+                    
+                    <div class="card">
+                        <div class="card-body" style="background-color: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px);">
+                              <form class="form" method="post" action="/login_validation">
+                                <label>Email</label><br>
+                                <input type="email" class="form-control transparent-input" name="email" placeholder="Enter your registered email" required><br>
+                                <label>Password</label><br>
+                                <input type="password" class="form-control transparent-input" name="password" placeholder="Enter your password" required><br><br>
+                                <input type="submit" class="btn btn-primary btn-block btn-lg" value="Login">
+                              </form>
+                            <!-- Reset Password -->
+                            <div class="row">
+                                <div class="col my-1">
+                                        <div class="form-check m-1">
+                                        <input class="form-check-input my-2" type="checkbox" value="" id="form2Example31"/>
+                                        <label class="form-check-label text-primary" for="form2Example31"> Remember me </label>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <p class="mt-2" data-toggle="modal" data-target="#password_reset"><a href="#password_reset">Forget Password?</a></p>
                                 </div>
                             </div>
+
+                            <!-- Modal -->
+                            <div class="modal top fade" id="password_reset" tabindex="-1" aria-labelledby="exampleModalLabel"
+                             aria-hidden="true" data-mdb-backdrop="true" data-mdb-keyboard="true">
+                                <div class="modal-dialog" style="width: 300px;">
+                                <div class="modal-content text-center">
+                                    <div class="modal-header h5 text-white bg-primary justify-content-center">
+                                        Password Reset
+                                    </div>
+                                    <div class="modal-body px-5">
+                                        <p class="py-2">
+                                            Enter your registered email address to reset your password.
+                                        </p>
+                                        <form class="form" method="post" action="/reset">
+                                            <input type="email" class="form-control " id="femail" name="femail" placeholder="Enter registered email" required>
+                                            <input type="password" class="form-control my-1"  name="pswd" placeholder="Enter New Password" required><br>
+                                            <input type="submit" class="btn my-2 btn-primary btn-block" id="reset" name="reset" value="Reset">
+
+                                        </form>
+                                        <div class="d-flex justify-content-between mt-4">
+                                            <a class="" href="/">Login</a>
+                                            <a class="" href="/register">Register</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+                          <p class="mt-2">Not a member? <a href="/register">Register</a></p>
+                            <p class="mt-2">Any Query? <a href="/contact">Contact Us</a> </p>
                         </div>
-                        </div>
+                      </div>
                     </div>
-                  <p class="mt-2">Not a member? <a href="/register">Register</a></p>
-                    <p class="mt-2">Any Query? <a href="/contact">Contact Us</a> </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Animated Text Banner -->
-    <div class="marquee-container mt-auto py-3 bg-dark">
-        <div class="marquee-text">
-            Take charge of your finances with advanced expense tracking and visualization capabilities
+        <!-- Marquee moved inside main layout -->
+        <div class="marquee-container mt-auto" style="position: relative; z-index: 999;">
+            <div class="marquee-text">
+                Take charge of your finances with advanced expense tracking and visualization capabilities
+            </div>
         </div>
     </div>
 
@@ -117,7 +129,11 @@
         .marquee-container {
             overflow: hidden;
             white-space: nowrap;
-            position: relative;
+            position: fixed;
+            bottom: 0;
+            left: 250px; /* Match sidebar width */
+            right: 0;
+            z-index: 1001; /* Higher than sidebar's 1000 */
             background: rgba(0, 0, 0, 0.8);
         }
 
@@ -128,6 +144,7 @@
             color: white;
             font-size: 1.2rem;
             font-weight: 500;
+            line-height: 2.5rem; /* Add vertical centering */
         }
 
         @keyframes marquee {
