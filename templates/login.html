@@ -96,6 +96,14 @@
     </div>
 
     <style>
+        .body {
+            background-image: url("{{ url_for('static', filename='app background image.avif') }}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            min-height: 100vh;
+        }
+
         .marquee-container {
             overflow: hidden;
             white-space: nowrap;
