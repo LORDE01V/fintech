@@ -1,0 +1,3 @@
+class User(db.Model):
+    # ... existing fields ...
+    profile_picture = db.Column(db.String(100), default='default.jpg') 
