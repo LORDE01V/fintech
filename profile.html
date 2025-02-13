@@ -1,0 +1,82 @@
+<form class="settings-form">
+    <!-- Security Section -->
+    <div class="form-group">
+        <label class="form-label">Account Security</label>
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changeUsernameModal">
+            Change Username
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+            Change Password
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePhoneModal">
+            Update Phone Number
+        </button>
+    </div>
+
+    <!-- Beneficiaries Management -->
+    <div class="form-group">
+        <label class="form-label">Beneficiaries</label>
+        <div id="beneficiaries-list">
+            <!-- Existing beneficiaries would be populated here -->
+        </div>
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Add new beneficiary" id="new-beneficiary">
+            <button class="btn btn-success" type="button" onclick="addBeneficiary()">Add</button>
+        </div>
+    </div>
+
+    <!-- Premium Upgrade -->
+    <div class="form-group premium-section">
+        <label class="form-label">Mobile Banking Tier</label>
+        <div class="alert alert-info">
+            Current Tier: Standard
+            <button class="btn btn-warning float-end" onclick="upgradeToPremium()">Upgrade to Premium</button>
+        </div>
+    </div>
+
+    <!-- Banking Details -->
+    <div class="form-group">
+        <label class="form-label">Banking Information</label>
+        <div class="row">
+            <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="Account Number" id="account-number">
+            </div>
+            <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="Routing Number" id="routing-number">
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Controls -->
+    <div class="form-group">
+        <label class="form-label">Card Management</label>
+        <div class="alert alert-danger">
+            <button class="btn btn-danger" onclick="blockCard()">Block Lost/Stolen Card</button>
+            <span class="float-end">Last Updated: 2023-07-20</span>
+        </div>
+    </div>
+
+    <!-- Existing save button -->
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+</form>
+
+<!-- Modals for security changes -->
+<div class="modal fade" id="changePasswordModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Password</h5>
+            </div>
+            <div class="modal-body">
+                <input type="password" class="form-control" placeholder="Current Password">
+                <input type="password" class="form-control mt-2" placeholder="New Password">
+                <input type="password" class="form-control mt-2" placeholder="Confirm New Password">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary">Update Password</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ... other modals similar structure ... -->
+<!-- ... rest of existing file ... --> 
