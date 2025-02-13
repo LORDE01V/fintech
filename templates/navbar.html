@@ -1,0 +1,19 @@
+<div class="bg-nav d-flex flex-column flex-md-row align-items-center pb-0 mb-0 border-bottom">
+    <h5 class="m-3 mr-md-auto font-weight-normal">
+        <a href="/" style="text-decoration: none">NexGen Finance - 
+            {% if 'user_id' in session %}{{ user_name }}{% endif %}
+        </a>
+    </h5>
+    <nav class="m-2 my-md-0 mr-md-3">
+        {% if 'user_id' in session %}
+            <a class="py-2 m-2 text-dark" href="/home">Home</a>
+            <a class="py-2 m-2 text-dark" href="/analysis">Analysis</a>
+            <a class="py-2 m-2 text-dark" href="/profile">Profile</a>
+            <a class="py-2 m-2 text-dark" href="/contact">Contact</a>
+            <a class="btn m-2 btn-outline-warning" href="/logout">Logout</a>
+        {% else %}
+            <a class="py-2 m-2 text-dark" href="/">Login</a>
+            <a class="py-2 m-2 text-dark" href="/register">Register</a>
+        {% endif %}
+    </nav>
+</div> 

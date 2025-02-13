@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Common head elements -->
+</head>
+<body class="page-bg">
+    {% include 'navbar.html' %}
+    
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Common scripts -->
+    <footer>
+        {% block footer %}
+        <p>&copy; 2025 NexGen Finance, Inc</p>
+        {% endblock %}
+    </footer>
+</body>
+</html> 

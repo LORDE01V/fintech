@@ -92,13 +92,45 @@ def reset():
         return redirect('/home')
 
 
-@app.route('/register')
+@app.route('/register', methods=['POST'])
 def register():
-    if 'user_id' in session:  # if user is logged-in
-        flash("Already a user is logged-in!")
-        return redirect('/home')
-    else:  # if not logged-in
-        return render_template("register.html")
+    # Existing user registration
+    username = request.form.get('username')
+    email = request.form.get('email')
+    password = generate_password_hash(request.form.get('password'))
+    
+    # New customer fields
+    first_name = request.form.get('first_name')
+    last_name = request.form.get('last_name')
+    dob = request.form.get('dob')
+    phone = request.form.get('phone')
+    address = request.form.get('address')
+
+    try:
+        # Insert into user_login
+        support.execute_query("insert",
+            "INSERT INTO user_login (username, email, password) VALUES (?, ?, ?)",
+            (username, email, password)
+        )
+        
+        # Get the new user ID
+        user = support.execute_query("search",
+            "SELECT user_id FROM user_login WHERE email = ?", (email,)
+        )[0][0]
+
+        # Insert into Customers
+        support.execute_query("insert",
+            """INSERT INTO Customers 
+            (FirstName, LastName, DateOfBirth, Email, Phone, Address)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (first_name, last_name, dob, email, phone, address)
+        )
+
+        flash("Registration successful!")
+        return redirect('/')
+    except Exception as e:
+        flash("Registration failed: " + str(e))
+        return redirect('/register')
 
 
 @app.route('/registration', methods=['POST'])
@@ -265,42 +297,16 @@ def add_expense():
 
 @app.route('/analysis')
 def analysis():
-    if 'user_id' in session:  # if already logged-in
-        query = "SELECT * FROM user_login WHERE user_id = ?"
-        userdata = support.execute_query('search', query, (session['user_id'],))
-        query2 = "SELECT pdate,expense, pdescription, amount FROM user_expenses WHERE user_id = ?"
-
-        data = support.execute_query('search', query2, (session['user_id'],))
-        df = pd.DataFrame(data, columns=['Date', 'Expense', 'Note', 'Amount(₹)'])
-        df = support.generate_df(df)
-
-        if df.shape[0] > 0:
-            pie = support.meraPie(df=df, names='Expense', values='Amount(₹)', hole=0.7, hole_text='Expense',
-                                  hole_font=20,
-                                  height=180, width=180, margin=dict(t=1, b=1, l=1, r=1))
-            df2 = df.groupby(['Note', "Expense"]).sum().reset_index()[["Expense", 'Note', 'Amount(₹)']]
-            bar = support.meraBarChart(df=df2, x='Note', y='Amount(₹)', color="Expense", height=180, x_label="Category",
-                                       show_xtick=False)
-            line = support.meraLine(df=df, x='Date', y='Amount(₹)', color='Expense', slider=False, show_legend=False,
-                                    height=180)
-            scatter = support.meraScatter(df, 'Date', 'Amount(₹)', 'Expense', 'Amount(₹)', slider=False, )
-            heat = support.meraHeatmap(df, 'Day_name', 'Month_name', height=200, title="Transaction count Day vs Month")
-            month_bar = support.month_bar(df, 280)
-            sun = support.meraSunburst(df, 280)
-
-            return render_template('analysis.html',
-                                   user_name=userdata[0][1],
-                                   pie=pie,
-                                   bar=bar,
-                                   line=line,
-                                   scatter=scatter,
-                                   heat=heat,
-                                   month_bar=month_bar,
-                                   sun=sun
-                                   )
-        else:
-            flash("No data records to analyze.")
-            return redirect('/home')
+    if 'user_id' not in session:
+        return redirect('/')
+    
+    try:
+        # TODO: Add data processing logic here
+        pass  # Temporary placeholder
+    except Exception as e:
+        app.logger.error(f"Analysis error: {str(e)}")
+        flash("Error generating analysis visualizations")
+        return redirect('/home')
 
     else:  # if not logged-in
         return redirect('/')
