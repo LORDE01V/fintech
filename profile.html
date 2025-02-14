@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- ... existing head content ... -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
 <body>
     <div class="container mt-5">
         <div class="row">
-            <!-- Profile Picture Section -->
+            <!-- Left Column -->
             <div class="col-md-4 text-center">
-                <!-- ... existing profile section ... -->
-                <!-- Add Profile Picture Upload Form -->
+                <img src="{{ url_for('static', filename='uploads/' + current_user.profile_picture) }}" 
+                     class="rounded-circle" width="150" alt="Profile">
+                <h4 class="mt-3">{{ current_user.username }}</h4>
                 <form method="post" action="/uploadphoto" enctype="multipart/form-data" class="mt-3">
                     <div class="form-group">
                         <input type="file" class="form-control-file" name="profile_pic" accept="image/*" required>
@@ -18,45 +22,104 @@
                 </form>
             </div>
 
-            <!-- ... existing tab navigation ... -->
+            <!-- Right Column -->
+            <div class="col-md-8">
+                <h3>Profile Settings</h3>
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="details-tab" data-toggle="tab" href="#details" role="tab">Details</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="password-tab" data-toggle="tab" href="#password" role="tab">Password</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="bio-tab" data-toggle="tab" href="#bio" role="tab">Bio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" id="delete-tab" data-toggle="tab" href="#delete" role="tab">Delete</a>
+                    </li>
+                </ul>
 
-            <!-- Add new tab content sections -->
-            <div class="tab-content">
-                <!-- ... existing details tab ... -->
+                <div class="tab-content mt-3" id="myTabContent">
+                    <!-- Profile Details -->
+                    <div class="tab-pane fade show active" id="details" role="tabpanel">
+                        <form method="post" action="/updateprofile">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" class="form-control" name="full_name" 
+                                       value="{{ current_user.full_name }}" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
 
-                <!-- Password Change Tab -->
-                <div class="tab-pane container fade" id="security">
-                    <form method="post" action="/changepassword" class="mt-3">
-                        <div class="form-group">
-                            <label>Current Password</label>
-                            <input type="password" class="form-control" name="current_password" required>
+                    <!-- Password Change -->
+                    <div class="tab-pane fade" id="password" role="tabpanel">
+                        <form method="post" action="/changepassword">
+                            <div class="form-group">
+                                <label>Current Password</label>
+                                <input type="password" class="form-control" name="current_password" required>
+                            </div>
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <input type="password" class="form-control" name="new_password" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm New Password</label>
+                                <input type="password" class="form-control" name="confirm_password" required>
+                            </div>
+                            <button type="submit" class="btn btn-warning">Change Password</button>
+                        </form>
+                    </div>
+
+                    <!-- About Me -->
+                    <div class="tab-pane fade" id="bio" role="tabpanel">
+                        <form method="post" action="/updatebio">
+                            <div class="form-group">
+                                <textarea class="form-control" name="about_me" rows="4">{{ current_user.about_me or '' }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-info">Update Bio</button>
+                        </form>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="tab-pane fade" id="contact" role="tabpanel">
+                        <form method="post" action="/updatecontact">
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="tel" class="form-control" name="phone" 
+                                       value="{{ current_user.phone }}" pattern="[0-9]{10}">
+                            </div>
+                            <div class="form-group">
+                                <label>Address</label>
+                                <input type="text" class="form-control" name="address" 
+                                       value="{{ current_user.address }}">
+                            </div>
+                            <button type="submit" class="btn btn-secondary">Save Contact</button>
+                        </form>
+                    </div>
+
+                    <!-- Delete Account -->
+                    <div class="tab-pane fade" id="delete" role="tabpanel">
+                        <div class="alert alert-danger">
+                            <h5>Danger Zone</h5>
+                            <form method="post" action="/deleteaccount" 
+                                  onsubmit="return confirm('This action cannot be undone! Continue?');">
+                                <button type="submit" class="btn btn-danger">Delete Account Permanently</button>
+                            </form>
                         </div>
-                        <!-- ... other password fields ... -->
-                        <button type="submit" class="btn btn-warning">Change Password</button>
-                    </form>
-                </div>
-
-                <!-- About Me Tab -->
-                <div class="tab-pane container fade" id="about">
-                    <form method="post" action="/updatebio" class="mt-3">
-                        <div class="form-group">
-                            <textarea class="form-control" name="about_me" rows="4">{{ about_me or '' }}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-info">Update Bio</button>
-                    </form>
-                </div>
-
-                <!-- Delete Account Section -->
-                <div class="tab-pane container fade" id="danger">
-                    <form method="post" action="/deleteaccount" class="mt-4" 
-                          onsubmit="return confirm('This will permanently delete your account! Continue?');">
-                        <button type="submit" class="btn btn-danger">Delete Account</button>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ... existing scripts ... -->
+    <!-- Required Scripts -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </body>
 </html>
