@@ -6,53 +6,19 @@ import plotly
 import plotly.express as px
 import json
 import openai
-from typing import List, Dict
-
+from typing import List, Dict, Union, Tuple
+from openai import OpenAI
+import os
 
 # Use this function for SQLITE3
 def connect_db():
-    conn = sqlite3.connect("expense.db")
-    cur = conn.cursor()
-
-    cur.execute('''CREATE TABLE IF NOT EXISTS Customers (
-        CustomerID INTEGER PRIMARY KEY AUTOINCREMENT,
-        FirstName TEXT NOT NULL,
-        LastName TEXT NOT NULL,
-        DateOfBirth TEXT NOT NULL,
-        Email TEXT UNIQUE NOT NULL,
-        Phone TEXT NOT NULL,
-        Address TEXT NOT NULL,
-        CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    
-
-    cur.execute(
-        '''CREATE TABLE IF NOT EXISTS user_login (user_id INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(30) NOT NULL, 
-        email VARCHAR(30) NOT NULL UNIQUE, password VARCHAR(20) NOT NULL)''')
-    cur.execute(
-        '''CREATE TABLE IF NOT EXISTS user_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, pdate DATE NOT 
-        NULL, expense VARCHAR(10) NOT NULL, amount INTEGER NOT NULL, pdescription VARCHAR(50), FOREIGN KEY (user_id) 
-        REFERENCES user_login(user_id))''')
-    
-    cur.execute('''CREATE TABLE IF NOT EXISTS financial_goals (
-        goal_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        goal_text TEXT NOT NULL,
-        target_amount FLOAT,
-        deadline DATE,
-        FOREIGN KEY(user_id) REFERENCES user_login(user_id))''')
-    
-        
-    cur.execute(''' CREATE TABLE IF NOT EXISTS Accounts(
-        AccountID INT PRIMARY KEY,
-        CustomerID INT,
-        AccountType VARCHAR(50),
-        Balance DECIMAL(15, 2),
-        CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
-    )''')
-    conn.commit()
-    return conn, cur
+    try:
+        conn = sqlite3.connect("expense.db")
+        conn.row_factory = sqlite3.Row
+        return conn
+    except Exception as e:
+        print(f"Connection error: {e}")
+        return None
 
 
 # Use this function for mysql
@@ -86,33 +52,27 @@ def close_db(connection=None, cursor=None):
     connection.close()
 
 
-def execute_query(operation=None, query=None, params=()):
-    """
-    Execute Query
-    :param operation: 'search' or 'insert'
-    :param query: SQL query with ? placeholders
-    :param params: Tuple of parameters
-    :return: data for search, None for insert
-    """
-    connection, cursor = connect_db()
+def execute_query(operation: str, query: str, values: Tuple = ()) -> Union[List, None]:
+    conn = connect_db()
+    if not conn:
+        return None
+    
+    cur = conn.cursor()
     try:
-        if operation == 'search':
-            cursor.execute(query, params)
-            data = cursor.fetchall()
-            return data
-        elif operation == 'insert':
-            cursor.execute(query, params)
-            connection.commit()
-            return None
-        else:
-            raise ValueError("Invalid operation type")
-    except sqlite3.Error as e:
+        if operation == "search":
+            cur.execute(query, values)
+            result = cur.fetchall()
+        else:  # insert, update, delete
+            cur.execute(query, values)
+            conn.commit()
+            result = None
+            
+        return result
+    except Exception as e:
         print(f"Database error: {e}")
-        if operation == 'insert':
-            connection.rollback()
-        raise  # Re-raise the exception for handling upstream
+        return None
     finally:
-        connection.close()
+        conn.close()
 
 
 def generate_df(df):
@@ -458,15 +418,15 @@ def meraSunburst(df=None, height=None, width=None):
 
 
 def ask_money_copilot(question: str, financial_data: List[Dict]) -> str:
-    messages = [
-        {"role": "system", "content": "You're a financial expert analyzing this user data: " + str(financial_data)},
-        {"role": "user", "content": question}
-    ]
-    response = openai.ChatCompletion.create(
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
-        messages=messages
+        messages=[
+            {"role": "system", "content": f"Financial expert analyzing: {str(financial_data)}"},
+            {"role": "user", "content": question}
+        ]
     )
-    return response.choices[0].message['content']
+    return response.choices[0].message.content
 
 
 def get_financial_health(user_id: int) -> Dict:
