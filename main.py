@@ -49,6 +49,9 @@ client = OpenAI(
 if not client.api_key:
     raise ValueError("No OpenAI API key found. Set OPENAI_API_KEY in .env file")
 
+# Load your OpenAI API key from environment variables
+openai.api_key = os.getenv('OPENAI_API_KEY')
+
 @app.route('/')
 @app.route('/login')
 def login():
