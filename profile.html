@@ -5,12 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile Settings</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        .custom-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .profile-header {
+            background-color: #008cba;
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .nav-tabs {
+            border-bottom: none;
+            padding: 0 1rem;
+        }
+        .nav-link {
+            color: #333;
+            border: none !important;
+        }
+        .nav-link.active {
+            color: #008cba !important;
+            border-bottom: 2px solid #008cba !important;
+        }
+        .tab-content {
+            padding: 1.5rem;
+        }
+        .form-control {
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+        .btn {
+            border-radius: 5px;
+            padding: 0.5rem 1.5rem;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
+    <div class="custom-container">
+        <div class="profile-header">
+            <h2>Profile Settings</h2>
+        </div>
+        
+        {% block content %}
         <div class="row">
             <!-- Left Column -->
-            <div class="col-md-4 text-center">
+            <div class="col-md-4 text-center pt-4">
                 <img src="{{ url_for('static', filename='uploads/' + current_user.profile_picture) }}" 
                      class="rounded-circle" width="150" alt="Profile">
                 <h4 class="mt-3">{{ current_user.username }}</h4>
@@ -18,14 +62,13 @@
                     <div class="form-group">
                         <input type="file" class="form-control-file" name="profile_pic" accept="image/*" required>
                     </div>
-                    <button type="submit" class="btn btn-sm btn-outline-success">Update Photo</button>
+                    <button type="submit" class="btn btn-outline-success">Update Photo</button>
                 </form>
             </div>
 
             <!-- Right Column -->
             <div class="col-md-8">
-                <h3>Profile Settings</h3>
-                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <ul class="nav nav-tabs" id="profileTabs" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link active" id="details-tab" data-toggle="tab" href="#details" role="tab">Details</a>
                     </li>
@@ -43,7 +86,7 @@
                     </li>
                 </ul>
 
-                <div class="tab-content mt-3" id="myTabContent">
+                <div class="tab-content mt-3">
                     <!-- Profile Details -->
                     <div class="tab-pane fade show active" id="details" role="tabpanel">
                         <form method="post" action="/updateprofile">
@@ -115,6 +158,7 @@
                 </div>
             </div>
         </div>
+        {% endblock %}
     </div>
 
     <!-- Required Scripts -->

@@ -1,20 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Common head elements -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Banking - {{ title }}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        /* Add your custom styles here */
+        .banking-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .banking-header {
+            background-color: #008cba;
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .menu-item:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
 </head>
-<body class="page-bg">
-    {% include 'navbar.html' %}
-    
-    <div class="container">
-        {% block content %}{% endblock %}
-    </div>
-    
-    <!-- Common scripts -->
-    <footer>
-        {% block footer %}
-        <p>&copy; 2025 NexGen Finance, Inc</p>
+<body>
+    <div class="banking-container">
+        <div class="banking-header">
+            <h2>Online Banking</h2>
+            <p>{{ current_user.username }}</p>
+        </div>
+        
+        {% block content %}
+        <!-- Main content will go here -->
         {% endblock %}
-    </footer>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </body>
 </html> 

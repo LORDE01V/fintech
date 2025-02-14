@@ -12,10 +12,20 @@ login_manager = LoginManager(app)
 
 # ... login manager and other routes ...
 
+@app.route('/')
+def home():
+    return redirect(url_for('profile'))
+
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html')
+    return render_template('profile.html',
+                          name=current_user.username,
+                          email=current_user.email,
+                          profile_pic=current_user.profile_picture,
+                          about_me=current_user.about_me,
+                          phone=current_user.phone,
+                          address=current_user.address)
 
 @app.route('/uploadphoto', methods=['POST'])
 @login_required
@@ -108,6 +118,16 @@ def analysis():
         # pass required template variables here
     ) 
 
+@app.route('/cards')
+@login_required
+def cards():
+    return render_template('cards.html')
+
+@app.route('/transfers')
+@login_required
+def transfers():
+    return render_template('transfers.html')
+
 def change_password():
     # ... existing checks ...
     if len(new_password) < 8:
@@ -148,4 +168,7 @@ def delete_account():
     db.session.commit()
     logout_user() 
 
-db.create_all() 
+db.create_all()
+
+if __name__ == '__main__':
+    app.run(debug=True) 
