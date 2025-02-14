@@ -128,45 +128,38 @@ def cards():
 def transfers():
     return render_template('transfers.html')
 
-def change_password():
-    # ... existing checks ...
-    if len(new_password) < 8:
-        flash('Password must be at least 8 characters')
-        return redirect(url_for('profile'))
-    if not any(char.isdigit() for char in new_password):
-        flash('Password must contain at least one number')
-        return redirect(url_for('profile')) 
-
-def upload_photo():
-    # ... existing checks ...
-    if file and allowed_file(file.filename):
-        # Delete old profile picture if not default
-        if current_user.profile_picture != 'default.jpg':
-            try:
-                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], current_user.profile_picture))
-            except:
-                pass
+@app.route('/reset', methods=['GET', 'POST'])
+def reset():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        new_password = request.form.get('new_password')  # Corrected variable name
+        confirm_password = request.form.get('confirm_password')
         
-        # Generate unique filename
-        ext = filename.rsplit('.', 1)[1].lower()
-        filename = f"user_{current_user.id}_{int(time.time())}.{ext}"
-        
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        current_user.profile_picture = filename
-        db.session.commit() 
-
-def delete_account():
-    # Delete profile picture
-    if current_user.profile_picture != 'default.jpg':
+        # Add validation checks
+        if not all([email, new_password, confirm_password]):
+            flash('All fields are required', 'danger')
+            return redirect(url_for('reset'))
+            
+        if new_password != confirm_password:
+            flash('Passwords do not match', 'danger')
+            return redirect(url_for('reset'))
+            
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            flash('Email not found', 'danger')
+            return redirect(url_for('reset'))
+            
         try:
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], current_user.profile_picture))
-        except:
-            pass
+            user.password_hash = generate_password_hash(new_password)
+            db.session.commit()
+            flash('Password reset successfully', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error resetting password', 'danger')
+            return redirect(url_for('reset'))
     
-    # Delete user from database
-    db.session.delete(current_user)
-    db.session.commit()
-    logout_user() 
+    return render_template('reset.html')
 
 db.create_all()
 
